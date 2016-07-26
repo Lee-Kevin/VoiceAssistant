@@ -201,19 +201,23 @@ class OLEDUpdateThread(threading.Thread):
     def runloop(self,TimeInterval):
         self._running = True
         def TargetFun(self,_TimeInterval):
-            global weather
+            
             while self._running:
-                oled_setTextXY(3,1)			#Print "WEATHER" at line 1
-                oled_putString(TimeUpdate())
-                oled_setTextXY(6,1)			#Print "WEATHER" at line 1
-                oled_putString(weather.weather_desc)
-                oled_setTextXY(8,1)			#Print "WEATHER" at line 1
-                oled_putString(str(weather.temperature)+"*C")     
-                oled_setTextXY(10,1)			#Print "WEATHER" at line 1
-                oled_putString("Power@Seeed")                   
-                import time
-                time.sleep(_TimeInterval)
-                logging.info("This is OLED threading")
+                try:
+                    global weather
+                    oled_setTextXY(3,1)			#Print "WEATHER" at line 1
+                    oled_putString(TimeUpdate())
+                    oled_setTextXY(6,1)			#Print "WEATHER" at line 1
+                    oled_putString(weather.weather_desc)
+                    oled_setTextXY(8,1)			#Print "WEATHER" at line 1
+                    oled_putString(str(weather.temperature)+"*C")     
+                    oled_setTextXY(10,1)			#Print "WEATHER" at line 1
+                    oled_putString("Power@Seeed")                   
+                    import time
+                    time.sleep(_TimeInterval)
+                    logging.info("This is OLED threading")
+                except Exception,e:
+                    logging.warn(e)
                 
         self.subthread = threading.Thread(target=TargetFun,args=(self, TimeInterval))
         self.subthread.start()
@@ -241,13 +245,12 @@ def ifButtonPressed():
 if __name__ == "__main__":
 
     Task1Weather = GetWeatherInfoThread()
-    Task1Weather.runloop(60)   # The Time Interval is 5 second
+    Task1Weather.runloop(50)   # The Time Interval is 5 second
 
     Task3OLED = OLEDUpdateThread()
-    Task3OLED.runloop(30)
+    Task3OLED.runloop(55)
     
- #   SignResult = SignInEvernote()
-    SignResult = False
+    SignResult = SignInEvernote()
     while False == SignResult:
         TimeOutIndex = TimeOutIndex + 1
         logging.info(TimeOutIndex)
@@ -255,8 +258,7 @@ if __name__ == "__main__":
             logging.warn("Still Can't Sign in the Evernote")
             TimeOutIndex = 0
             break
-        # SignResult = SignInEvernote()
-        SignResult = False
+        SignResult = SignInEvernote()
         time.sleep(5)
         logging.warn("Can't Sign in the Evernote")
         
@@ -268,7 +270,7 @@ if __name__ == "__main__":
         pass
     parser = MyHTMLParser()
 
-    logging.info("Next we'll in loop")
+    logging.info("Next we'll in loopever")
     
     while True:
         try:
