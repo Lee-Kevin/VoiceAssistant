@@ -45,6 +45,30 @@ noteGuid  = "your note book Guid"
 python EvernoteTest.py
 ```
 
+
+## Setup the startup script
+
+Copy the startup script file 'assistant' to '/etc/init.d'
+```
+sudo cp assisant /etc/init.d
+```
+And then set the file to execute
+```
+sudo chmod +x /etc/init.d/assistant
+```
+Start the app
+```
+sudo /etc/init.d/assisant start
+```
+Stop the app
+```
+sudo /etc/init.d/assisant stop
+```
+At last, you shoud set this app auto run when the system is boot up
+```
+sudo update-rc.d assisant defaults
+```
+
 If you have any questions about this project, please just let me know, my email lidreamer@foxmail.com or lidreamer@163.com
 
 ##License
