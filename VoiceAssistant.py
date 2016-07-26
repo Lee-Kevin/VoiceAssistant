@@ -241,25 +241,34 @@ def ifButtonPressed():
 if __name__ == "__main__":
 
     Task1Weather = GetWeatherInfoThread()
-    Task1Weather.runloop(5)   # The Time Interval is 5 second
+    Task1Weather.runloop(60)   # The Time Interval is 5 second
 
     Task3OLED = OLEDUpdateThread()
-    Task3OLED.runloop(10)
+    Task3OLED.runloop(30)
     
-    SignResult = SignInEvernote()
-    while SignResult == False:
+ #   SignResult = SignInEvernote()
+    SignResult = False
+    while False == SignResult:
         TimeOutIndex = TimeOutIndex + 1
+        logging.info(TimeOutIndex)
         if TimeOutIndex == 10:
-            logging.warn("Can't Sign in the Evernote")
+            logging.warn("Still Can't Sign in the Evernote")
             TimeOutIndex = 0
             break
-        SignResult = SignInEvernote()
-    
-    Task2Evernote = GetEvernoteThread()
-    Task2Evernote.runloop(10,noteGuid) 
+        # SignResult = SignInEvernote()
+        SignResult = False
+        time.sleep(5)
+        logging.warn("Can't Sign in the Evernote")
+        
+ # At here we're successed sign in the evernote  
+    Task2Evernote = GetEvernoteThread() 
+    if True == SignResult:
+        Task2Evernote.runloop(10,noteGuid) 
+    else:
+        pass
     parser = MyHTMLParser()
 
-    logging.info("你好")
+    logging.info("Next we'll in loop")
     
     while True:
         try:
@@ -278,6 +287,7 @@ if __name__ == "__main__":
                         tts.say(result)
             else :
                 pass
+            time.sleep(.1)
 
         except KeyboardInterrupt:
             Task1Weather.terminate()

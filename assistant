@@ -1,0 +1,11 @@
+TART=99
+
+start() {
+	echo "Start Voice Assistant" 
+	python /home/RouterScript/runserver.py &  
+
+}
+
+stop() {
+	kill -9 `ps | grep "python /root/RouterScript/runserver.py" | awk '{if(NR==1)print$1}'`
+}
