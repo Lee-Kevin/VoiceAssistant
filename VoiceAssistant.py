@@ -8,9 +8,16 @@ from weather import weatherReport
 import threading 
 import time
 
+# import library using grovepi 
+from grovepi import *
+from grove_oled import *
+
+from Nettime import TimeUpdate
+
 logging.basicConfig(level='INFO')
 # define a global threading lock 
 Global_Lock = threading.Lock()
+
 
 class MyHTMLParser(HTMLParser):
     def __init__(self):
@@ -83,11 +90,11 @@ def GetNoteContent(noteGuid):
 TimeOutIndex = 0
 
 weatherSpeach = None
+city          = "shenzhen"
+weather       = weatherReport(city)
 
-def weatherInformation():
+def weatherInformation(weather):
     speach       = None
-    city         = "shenzhen"
-    weather = weatherReport(city)
     if weather.getWeather() == True:
         speach = ("The weather is %s. Temperature: %.1f. Humidity: %.1f%%. Wind speed: %.1f meters per second" % (weather.weather_desc,weather.temperature,weather.humidity,weather.wind_speed))
         logging.info(speach)
@@ -110,7 +117,8 @@ class GetWeatherInfoThread(threading.Thread):
         self._running = True 
         def TargetFun(self, _TimeInterval):
             while self._running:
-                speach = weatherInformation()
+                global weather
+                speach = weatherInformation(weather)
                 if speach != None:
                     global Global_Lock
                     Global_Lock.acquire()
@@ -162,14 +170,82 @@ class GetEvernoteThread(threading.Thread):
         else:
             return False
 
+class OLEDUpdateThread(threading.Thread):
+    def __init__(self,timeout = 1.0):
+        threading.Thread.__init__(self)
+        oled_init()
+        oled_clearDisplay()
+        oled_setNormalDisplay()
+        oled_setVerticalMode()
+        time.sleep(.1)
+              
+        oled_setTextXY(0,1)			#Print "WEATHER" at line 1
+        oled_putString("Assistant")    
+        oled_setTextXY(1,0)			#Print "WEATHER" at line 1
+        oled_putString("------------")     
 
+        oled_setTextXY(3,1)			#Print "WEATHER" at line 1
+        oled_putString("----- --:--")
+        
+        oled_setTextXY(5,0)			#Print "WEATHER" at line 1
+        oled_putString("------------")
+        
 
+ 
+        self.timeout = timeout
+        self._running = True
+        self.subthread = None
+    
+    def terminate(self):
+        self._running = False
+    def runloop(self,TimeInterval):
+        self._running = True
+        def TargetFun(self,_TimeInterval):
+            global weather
+            while self._running:
+                oled_setTextXY(3,1)			#Print "WEATHER" at line 1
+                oled_putString(TimeUpdate())
+                oled_setTextXY(6,1)			#Print "WEATHER" at line 1
+                oled_putString(weather.weather_desc)
+                oled_setTextXY(8,1)			#Print "WEATHER" at line 1
+                oled_putString(str(weather.temperature)+"*C")     
+                oled_setTextXY(10,1)			#Print "WEATHER" at line 1
+                oled_putString("Power@Seeed")                   
+                import time
+                time.sleep(_TimeInterval)
+                logging.info("This is OLED threading")
+                
+        self.subthread = threading.Thread(target=TargetFun,args=(self, TimeInterval))
+        self.subthread.start()
+    def isRunning(self):
+        if self.subthread.is_alive():
+            return True
+        else:
+            return False
+        
+# The handle of door port
+HandlePort = 14  # A0 Port
+pinMode(HandlePort,"INPUT")
+def ifButtonPressed():
+    global HandlePort,Task1,Task2
+    try:
+        sensor_value = analogRead(HandlePort)
+        if sensor_value > 800:
+            return True
+        else:
+            return False
+    except Exception,e:
+        logging.warn(e)
 
+        
 if __name__ == "__main__":
 
     Task1Weather = GetWeatherInfoThread()
     Task1Weather.runloop(5)   # The Time Interval is 5 second
 
+    Task3OLED = OLEDUpdateThread()
+    Task3OLED.runloop(10)
+    
     SignResult = SignInEvernote()
     while SignResult == False:
         TimeOutIndex = TimeOutIndex + 1
@@ -184,27 +260,29 @@ if __name__ == "__main__":
     parser = MyHTMLParser()
 
     logging.info("你好")
+    
     while True:
         try:
-            logging.info("This is in loop")
-            time.sleep(6)
-            logging.info(Task1Weather.weatherSpeach)
-            if Task1Weather.weatherSpeach != None:
-                tts.say(Task1Weather.weatherSpeach)
-            else:
-                pass
-            if Task2Evernote.content != None:
-                parser.feed(Task2Evernote.content)
-                content = parser.GetResult()
-                for result in content:
-                    logging.info("The result is :%s",result)
-                    tts.say(result)
+            if True == ifButtonPressed():
+                logging.info("There is someone want to go out")  
+                logging.info(Task1Weather.weatherSpeach)
+                if Task1Weather.weatherSpeach != None:
+                    tts.say(Task1Weather.weatherSpeach)
+                else:
+                    pass
+                if Task2Evernote.content != None:
+                    parser.feed(Task2Evernote.content)
+                    content = parser.GetResult()
+                    for result in content:
+                        logging.info("The result is :%s",result)
+                        tts.say(result)
             else :
                 pass
 
         except KeyboardInterrupt:
             Task1Weather.terminate()
             Task2Evernote.terminate()
+            Task3OLED.terminate()
             exit()
         except Exception, e:
             logging.info(e)
