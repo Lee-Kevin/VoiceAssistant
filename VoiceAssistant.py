@@ -287,6 +287,7 @@ if __name__ == "__main__":
                     for result in content:
                         logging.info("The result is :%s",result)
                         tts.say(result)
+                time.sleep(30)
             else :
                 pass
             time.sleep(.1)
