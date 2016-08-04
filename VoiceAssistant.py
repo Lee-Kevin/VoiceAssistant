@@ -234,6 +234,7 @@ def ifButtonPressed():
     global HandlePort,Task1,Task2
     try:
         sensor_value = analogRead(HandlePort)
+        # logging.info("The Sensor Value: %s",str(sensor_value))
         if sensor_value > 800:
             return True
         else:
@@ -287,6 +288,9 @@ if __name__ == "__main__":
                     for result in content:
                         logging.info("The result is :%s",result)
                         tts.say(result)
+                if not SignResult:
+                    tts.say("Don't forget take out the garbage")
+                
                 time.sleep(30)
             else :
                 pass
